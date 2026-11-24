@@ -1,0 +1,30 @@
+{
+    "name": "wiseadmin/wise-form-schema",
+    "description": "WiseAdmin 统一表单定义语言内核 — Fluent API 字段构建器 + 验证规则生成 + 数据过滤",
+    "type": "library",
+    "license": "Apache-2.0",
+    "keywords": ["wiseadmin", "form", "schema", "thinkphp"],
+    "require": {
+        "php": ">=8.1",
+        "ext-json": "*"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.0",
+        "mockery/mockery": "^1.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "wise\\form\\schema\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "wise\\form\\schema\\tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit",
+        "test-unit": "phpunit --testsuite Unit",
+        "test-functional": "phpunit --testsuite Functional"
+    }
+}
