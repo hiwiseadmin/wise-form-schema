@@ -1,0 +1,16 @@
+* text=auto
+
+*.php diff=php
+
+# 导出时排除
+/.gitattributes      export-ignore
+/.gitignore          export-ignore
+/CONTRIBUTING.md     export-ignore
+/.github/            export-ignore
+/.codebuddy/         export-ignore
+/.workbuddy/         export-ignore
+/tests/              export-ignore
+/docs/               export-ignore
+/design/             export-ignore
+/phpunit.xml         export-ignore
+/phpunit.xml.dist    export-ignore

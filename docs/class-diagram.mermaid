@@ -1,0 +1,150 @@
+classDiagram
+    direction TB
+
+    class Form {
+        -string $name
+        -array~AbstractField~ $fields
+        -array~Group~ $groups
+        -array~Repeater~ $repeaters
+        -static array~Closure~ $presets
+        +__construct(string $name)
+        +add(AbstractField $field) self
+        +group(name, title, ?icon, ?collapsed, ?callback) self
+        +when(field, operator, value, callback) self
+        +repeater(name, label, callback) self
+        +getName() string
+        +getFields() array
+        +getGroups() array
+        +getRepeaters() array
+        +toArray() array
+        +static fromArray(array $schema) Form
+        +static registerPreset(string $name, Closure) void
+        +usePreset(string $name) self
+        -static registerBuiltinPresets() void
+    }
+
+    class AbstractField {
+        #string $name
+        #string $label
+        #string $placeholder
+        #mixed $default
+        #bool $required
+        #string $help
+        #array $rules
+        #array $options
+        #bool $multiple
+        #?float $step
+        #mixed $min
+        #mixed $max
+        #?string $format
+        #bool|array $renderable
+        #array $dependencies
+        #?string $group
+        #array $conditionalRules
+        +__construct(string $name, ?string $label)
+        +static make(string $name, ?string $label) static
+        +getType() FieldType
+        +label(string) static
+        +placeholder(string) static
+        +default(mixed) static
+        +required(bool) static
+        +help(string) static
+        +rules(string|array) static
+        +options(array) static
+        +multiple(bool) static
+        +step(float) static
+        +min(mixed) static
+        +max(mixed) static
+        +format(string) static
+        +renderable(bool|array) static
+        +dependency(Dependency) static
+        +group(string) static
+        +requiredIf(string $field, string $operator, mixed $value) static
+        +requiredUnless(string $field, string $operator, mixed $value) static
+        +getName() string
+        +getRules() array
+        +getGroup() ?string
+        +isRequired() bool
+        +toArray() array
+        #buildProps() array
+        +static classForType(FieldType $type) string
+    }
+
+    class FieldType {
+        <<enum>>
+        TEXT
+        SELECT
+        NUMBER
+        TEXTAREA
+        DATE
+        DATETIME
+        CHECKBOX
+        RADIO
+        FILE
+        SWITCH
+        HIDDEN
+    }
+
+    class Repeater {
+        -string $name
+        -string $label
+        -Form $form
+        +__construct(string $name, string $label, Closure $callback)
+        +getName() string
+        +getLabel() string
+        +getForm() Form
+        +toArray() array
+        +static fromArray(array $data) self
+    }
+
+    class SchemaException {
+        +const CODE_DUPLICATE_FIELD = 1001
+        +const CODE_INVALID_FIELD = 1002
+        +const CODE_FILTER_ERROR = 1003
+        +const CODE_UNKNOWN_TYPE = 1004
+        -?string $fieldName
+        -array $context
+        +static duplicateField(string) self
+        +static invalidField(string, string) self
+        +static filterError(string, array) self
+        +static unknownType(string $type, string $formName) self
+    }
+
+    class Dependency {
+        +readonly string $field
+        +readonly string $operator
+        +readonly mixed $value
+        +readonly string $action
+        +__construct(field, operator, value, action)
+        +toArray() array
+    }
+
+    class RendererInterface {
+        <<interface>>
+        +render(array $schema, array $context) mixed
+    }
+
+    class JsonSchemaRenderer {
+        +render(array $schema, array $context) string
+        -buildFieldSchema(array $fieldDef) array
+        -mapType(string $type, array $props) array
+        -collectRequired(array $fields) array
+    }
+
+    class HasFormSchema {
+        <<trait>>
+        +abstract static formSchema(Form $form) Form
+        +static getFormSchema(?array $data) array
+    }
+
+    Form "1" --> "*" AbstractField : fields
+    Form "1" --> "*" Group : groups
+    Form "1" --> "*" Repeater : repeaters
+    Form ..> SchemaException : throws
+    Form ..> HasFormSchema : used by
+    AbstractField --> FieldType : getType()
+    AbstractField --> Dependency : dependencies[]
+    Repeater "1" --> "1" Form : sub-form
+    JsonSchemaRenderer ..|> RendererInterface
+    JsonSchemaRenderer ..> Form : reads toArray()
+    AbstractField ..> SchemaException : fromArray may throw

@@ -1,0 +1,59 @@
+sequenceDiagram
+    participant Caller
+    participant Form
+    participant AbstractField
+    participant FieldType
+    participant Repeater
+    participant SchemaException
+
+    Caller->>Form: fromArray(schema)
+
+    Note over Form: 1. 提取 form name
+    Form->>Form: new Form(schema['form'])
+
+    Note over Form: 2. 遍历 fields
+    loop 每个 field
+        Form->>Form: 读取 type 字符串
+        Form->>FieldType: FieldType::from(typeStr)
+        alt 未知 type
+            FieldType-->>Form: ValueError
+            Form->>SchemaException: unknownType(type, formName)
+            SchemaException-->>Caller: throws
+        else 已知 type
+            FieldType-->>Form: FieldType case
+            Form->>AbstractField: classForType(typeEnum)
+            AbstractField-->>Form: FQCN string
+            Form->>Form: new $className(name)
+            Note over Form: 遍历数组 key 填充属性
+            loop 每个属性 key
+                alt key == 'props'
+                    Form->>Form: 解包 props (options/multiple/min/max/step/format)
+                else key == 'dependencies'
+                    Form->>Form: new Dependency(...) → field->dependency()
+                else key == 'conditional_rules'
+                    Form->>Form: 填充 $conditionalRules 数组
+                else key in ['name','type']
+                    Note over Form: skip
+                else 普通属性
+                    Form->>Form: field->$key($value)
+                end
+            end
+            Form->>Form: $this->add(field)
+        end
+    end
+
+    Note over Form: 3. 还原 groups
+    loop 每个 group
+        Form->>Form: $this->group(name, title, icon, collapsed)
+    end
+
+    Note over Form: 4. 递归还原 repeaters
+    loop 每个 repeater
+        Form->>Repeater: fromArray(repeaterData)
+        Repeater->>Form: fromArray(subSchema)
+        Form-->>Repeater: subForm
+        Repeater-->>Form: Repeater instance
+        Form->>Form: $this->repeaters[name] = repeater
+    end
+
+    Form-->>Caller: Form instance
